@@ -95,7 +95,7 @@ int main(void) {
 			uint16_t mask  = XCB_CONFIG_WINDOW_STACK_MODE;
 			uint32_t value = XCB_STACK_MODE_ABOVE;
 			xcb_configure_window(conn, raise_wnd, mask, &value);
-			xcb_set_input_focus(conn, XCB_INPUT_FOCUS_PARENT, 
+			xcb_set_input_focus(conn, XCB_INPUT_FOCUS_NONE, 
 				raise_wnd, XCB_CURRENT_TIME);
 		}
 		break;
