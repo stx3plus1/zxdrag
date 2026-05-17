@@ -16,6 +16,9 @@
 #define INIT "/.zxrc"
 #define MOD_MASK XCB_MOD_MASK_1
 
+#define BORDER_WIDTH 4
+#define BORDER_COLOR 0xFC6712
+
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
@@ -95,7 +98,7 @@ int main(void) {
 
 	while ((event = xcb_wait_for_event(conn))) {
 		switch (event->response_type & ~0x80) {
-		// set focus to invisible window
+		// raise invisible window when focus dies
 		case XCB_UNMAP_NOTIFY: {
 			xcb_unmap_notify_event_t* unmap_event = (void*)event;
 			if (unmap_event->window != raise_wnd)
@@ -103,10 +106,29 @@ int main(void) {
 			raise_wnd = invis_wnd;
 			goto raise_window;
 		}
-		// set focus to new windows
+		// set up new windows
 		case XCB_MAP_NOTIFY: {
 			xcb_map_notify_event_t* map_event = (void*)event;
 			raise_wnd = map_event->window;
+
+			// should decorate and raise?
+			xcb_get_window_attributes_reply_t* reply =
+				xcb_get_window_attributes_reply(conn,
+				xcb_get_window_attributes(conn, raise_wnd), NULL);
+			if (!reply || reply->override_redirect)
+				break;
+
+			// set border width
+			uint16_t mask  = XCB_CONFIG_WINDOW_BORDER_WIDTH;
+			uint32_t value = BORDER_WIDTH;
+			xcb_configure_window(conn, raise_wnd, mask, &value);
+
+			// set border color
+			mask  = XCB_CW_BORDER_PIXEL;
+			value = BORDER_COLOR;
+			xcb_change_window_attributes(conn, raise_wnd, mask, &value);
+
+			// now raise it
 			goto raise_window;
 		}
 		// raise window under cursor
@@ -114,6 +136,8 @@ int main(void) {
 			xcb_key_press_event_t* key_event = (void*)event;
 			raise_wnd = key_event->child;
 		raise_window:
+			if (raise_wnd == XCB_NONE)
+				break;
 			uint16_t mask  = XCB_CONFIG_WINDOW_STACK_MODE;
 			uint32_t value = XCB_STACK_MODE_ABOVE;
 			xcb_configure_window(conn, raise_wnd, mask, &value);
@@ -140,6 +164,8 @@ int main(void) {
 
 			xcb_get_geometry_reply_t* reply = xcb_get_geometry_reply(conn, 
 				xcb_get_geometry(conn, drag_wnd), NULL);
+			if (!reply)
+				break;
 					
 			start_pos_x = reply->x;
 			start_pos_y = reply->y;
@@ -161,9 +187,9 @@ int main(void) {
 				(XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT);
 			uint32_t values[2] = { 
 				MIN(MAX(0, (move ? start_pos_x : start_w) + x_diff),
-					scr->width_in_pixels  - (move ? start_w : 0)),
+				scr->width_in_pixels - (move ? start_w + BORDER_WIDTH : 0)),
 				MIN(MAX(0, (move ? start_pos_y : start_h) + y_diff), 
-					scr->height_in_pixels - (move ? start_h : 0))
+				scr->height_in_pixels - (move ? start_h + BORDER_WIDTH : 0))
 			};
 			xcb_configure_window(conn, drag_wnd, mask, &values);
 		}
