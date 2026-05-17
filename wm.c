@@ -75,7 +75,7 @@ int main(void) {
 	bool move = false;
 	int start_x,     start_y,
 		start_pos_x, start_pos_y, 
-	    start_w,     start_h;
+		start_w,     start_h;
 	xcb_window_t drag_wnd;
 	xcb_window_t raise_wnd;
 	xcb_generic_event_t* event;
