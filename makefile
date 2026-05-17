@@ -1,6 +1,6 @@
-CC      = clang
-CFLAGS  = -Og -g -std=gnu2x -Werror
-LFLAGS  = -lX11 $(shell pkg-config --cflags --libs xcb xcb-aux)
+CC      = $(shell command -v cc || command -v clang)
+CFLAGS  = -O2 -std=gnu2x -Werror
+LFLAGS  = $(shell pkg-config --cflags --libs xcb xcb-aux)
 PREFIX  = /usr/local
 
 all: zxdrag
