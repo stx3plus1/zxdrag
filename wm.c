@@ -34,13 +34,19 @@ int main(void) {
 	uint32_t value = XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY;
 	xcb_change_window_attributes(conn, scr->root, mask, &value);
 
-	// grab JUST mouse l for move AND raise
-	xcb_grab_button(conn, 0, scr->root, 
+	// grab JUST mouse l for raising
+	xcb_grab_button(conn, 1, scr->root, 
+		XCB_EVENT_MASK_BUTTON_PRESS,
+		XCB_GRAB_MODE_SYNC, XCB_GRAB_MODE_ASYNC,
+		XCB_NONE, XCB_NONE, XCB_BUTTON_INDEX_1, XCB_MOD_MASK_ANY
+	);
+	// grab mask + mouse l for move
+	xcb_grab_button(conn, 1, scr->root, 
 		XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_POINTER_MOTION,
 		XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC,
 		XCB_NONE, XCB_NONE, XCB_BUTTON_INDEX_1, MOD_MASK
 	);
-	// grab mask + mouse r for resize
+	// ''     '' + mouse r for resize
 	xcb_grab_button(conn, 0, scr->root, 
 		XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_POINTER_MOTION,
 		XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC,
@@ -115,9 +121,17 @@ int main(void) {
 				raise_wnd, XCB_CURRENT_TIME);
 		}
 		break;
-		// begin move/resize
+		// begin move/resize or raise depending on mod
 		case XCB_BUTTON_PRESS: {
 			xcb_button_press_event_t* button_event = (void*)event;
+			if (button_event->state == XCB_NONE) {
+				xcb_allow_events(conn, XCB_ALLOW_REPLAY_POINTER,
+					button_event->time);
+				raise_wnd = button_event->child;
+				goto raise_window;
+			}
+			if (!(button_event->state & MOD_MASK))
+				break;
 
 			drag_wnd = button_event->child;
 			move     = (button_event->detail == XCB_BUTTON_INDEX_1);
