@@ -14,6 +14,8 @@
 #include <xcb/xcb_aux.h>
 
 #define CONFIG "/.zxrc"
+
+#define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 extern char** environ;
@@ -33,13 +35,13 @@ int main(void) {
 
 	// grab alt + mouse l for move
 	xcb_grab_button(conn, 0, scr->root, 
-		XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_BUTTON_RELEASE,
+		XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_POINTER_MOTION,
 		XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC,
 		XCB_NONE, XCB_NONE, XCB_BUTTON_INDEX_1, XCB_MOD_MASK_1
 	);
 	// ''    '' + mouse r for resize
 	xcb_grab_button(conn, 0, scr->root, 
-		XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_BUTTON_RELEASE,
+		XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_POINTER_MOTION,
 		XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC,
 		XCB_NONE, XCB_NONE, XCB_BUTTON_INDEX_3, XCB_MOD_MASK_1
 	);
@@ -120,13 +122,6 @@ int main(void) {
 			free(reply);
 		}
 		break;
-		// end move/resize
-		case XCB_BUTTON_RELEASE:
-			move = false;
-			drag_wnd = XCB_NONE;
-			start_x = 0, start_y = 0,
-			start_w = 0, start_h = 0;
-		break;
 		// handle move/resize configuration
 		case XCB_MOTION_NOTIFY: {
 			xcb_motion_notify_event_t* motion_event = (void*)event;
@@ -136,8 +131,8 @@ int main(void) {
 			uint16_t mask = move ? (XCB_CONFIG_WINDOW_X     | XCB_CONFIG_WINDOW_Y) : 
 			                       (XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT);
 			uint32_t values[2] = { 
-				MAX(1, (move ? start_pos_x : start_w) + x_diff),
-				MAX(1, (move ? start_pos_y : start_h) + y_diff)
+				MIN(MAX(0, (move ? start_pos_x : start_w) + x_diff), scr->width_in_pixels  - (move ? start_w : 0)),
+				MIN(MAX(0, (move ? start_pos_y : start_h) + y_diff), scr->height_in_pixels - (move ? start_h : 0))
 			};
 			xcb_configure_window(conn, drag_wnd, mask, &values);
 		}
