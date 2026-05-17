@@ -1,4 +1,4 @@
-CC      = $(shell command -v cc || command -v clang)
+CC      = $(shell command -v clang || command -v cc)
 CFLAGS  = -O2 -std=gnu2x -Werror
 LFLAGS  = $(shell pkg-config --cflags --libs xcb xcb-aux)
 PREFIX  = /usr/local
