@@ -19,6 +19,9 @@
 #define BORDER_WIDTH 4
 #define BORDER_COLOR 0xFC6712
 
+static_assert(BORDER_WIDTH >= 0, "invalid border width (inclusive gt 0)");
+static_assert(BORDER_COLOR < 0xFFFFFF, "borders are 24-bit (it's X11...)");
+
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
@@ -26,7 +29,7 @@ extern char** environ;
 
 int main(void) {
 	// connect to X server
-	int default_screen = -1;
+	auto default_screen = -1;
 	xcb_connection_t* conn = xcb_connect(NULL, &default_screen);
 	if (xcb_connection_has_error(conn) < 0 || default_screen < 0)
 		return 1;
@@ -76,7 +79,7 @@ int main(void) {
 	setenv("XDG_CURRENT_DESKTOP", "zxdrag", true);
 
 	// run ~/.zxrc
-	char* home = getenv("HOME");
+	auto home = getenv("HOME");
 	if (home) {
 		char rc_path[strlen(home) + strlen(INIT) + 1];
 		strcpy(rc_path, home);
@@ -88,7 +91,7 @@ int main(void) {
 		waitpid(config_pid, NULL, 0);
 	}
 
-	bool move;
+	auto move = false;
 	int start_x,     start_y,
 		start_pos_x, start_pos_y, 
 		start_w,     start_h;
@@ -178,8 +181,8 @@ int main(void) {
 		// handle move/resize configuration
 		case XCB_MOTION_NOTIFY: {
 			xcb_motion_notify_event_t* motion_event = (void*)event;
-			int	x_diff = motion_event->root_x - start_x;
-			int y_diff = motion_event->root_y - start_y;
+			auto x_diff = motion_event->root_x - start_x;
+			auto y_diff = motion_event->root_y - start_y;
 
 			uint16_t mask = move ? 
 				(XCB_CONFIG_WINDOW_X     | XCB_CONFIG_WINDOW_Y) :

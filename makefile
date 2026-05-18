@@ -6,11 +6,11 @@ PREFIX  = /usr/local
 all: zxdrag
 
 zxdrag: wm.c
-	@$(CC) $< -o $@ $(CFLAGS) $(LFLAGS)
+	$(CC) $< -o $@ $(CFLAGS) $(LFLAGS)
 
 install: zxdrag
-	@mkdir -p $(PREFIX)/bin
-	@cp $^ $(PREFIX)/bin/
+	mkdir -p $(PREFIX)/bin
+	cp $^ $(PREFIX)/bin/
 
 clean: zxdrag 
-	@rm -f $^
+	rm -f $^
