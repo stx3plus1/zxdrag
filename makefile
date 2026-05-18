@@ -1,5 +1,5 @@
-CC      = $(shell command -v clang || command -v cc)
-CFLAGS  = -O2 -std=gnu2x -Werror
+CC      = $(shell command -v clang || command -v cc || command -v gcc)
+CFLAGS  = -O2 -std=gnu2x -Werror -march=native
 LFLAGS  = $(shell pkg-config --cflags --libs xcb xcb-aux)
 PREFIX  = /usr/local
 
