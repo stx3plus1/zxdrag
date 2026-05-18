@@ -135,8 +135,9 @@ int main(void) {
 		case XCB_KEY_PRESS: {
 			xcb_key_press_event_t* key_event = (void*)event;
 			raise_wnd = key_event->child;
+		// common raise thrown here, breaks itself
 		raise_window:
-			if (raise_wnd == XCB_NONE)
+			if (!raise_wnd)
 				break;
 			uint16_t mask  = XCB_CONFIG_WINDOW_STACK_MODE;
 			uint32_t value = XCB_STACK_MODE_ABOVE;
@@ -145,7 +146,7 @@ int main(void) {
 				raise_wnd, XCB_CURRENT_TIME);
 		}
 		break;
-		// begin move/resize or raise depending on mod
+		// begin move/resize or just raise depending on mod
 		case XCB_BUTTON_PRESS: {
 			xcb_button_press_event_t* button_event = (void*)event;
 			if (!(button_event->state & MOD_MASK)) {
@@ -183,11 +184,12 @@ int main(void) {
 			uint16_t mask = move ? 
 				(XCB_CONFIG_WINDOW_X     | XCB_CONFIG_WINDOW_Y) :
 				(XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT);
-			uint32_t values[2] = { 
-				MIN(MAX(0, (move ? start_pos_x : start_w) + x_diff),
-				scr->width_in_pixels - (move ? start_w + BORDER_WIDTH : 0)),
-				MIN(MAX(0, (move ? start_pos_y : start_h) + y_diff), 
-				scr->height_in_pixels - (move ? start_h + BORDER_WIDTH : 0))
+			uint32_t values[2] = {
+			// sorry, must 80x24
+			MIN(MAX(0, (move ? start_pos_x : start_w) + x_diff),
+			scr->width_in_pixels - (move ? start_w + 2 * BORDER_WIDTH : 0)),
+			MIN(MAX(0, (move ? start_pos_y : start_h) + y_diff),
+			scr->height_in_pixels - (move ? start_h + 2 * BORDER_WIDTH : 0))
 			};
 			xcb_configure_window(conn, drag_wnd, mask, &values);
 		}
