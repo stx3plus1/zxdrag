@@ -1,5 +1,5 @@
 //
-// zxclock
+// zxdrag: zxdate
 // by stx4
 //
 
