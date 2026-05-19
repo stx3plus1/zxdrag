@@ -1,16 +1,19 @@
 CC      = $(shell command -v clang || command -v cc || command -v gcc)
 CFLAGS  = -O2 -std=gnu2x -Werror -march=native
-LFLAGS  = $(shell pkg-config --cflags --libs xcb xcb-aux)
+LFLAGS  = $(shell pkg-config --cflags --libs xcb xcb-aux cairo)
 PREFIX  = /usr/local
 
-all: zxdrag
+UTILS_FILES = $(wildcard *.c utils/*.c)
+UTILS_EXECS = $(UTILS_FILES:.c=)
 
-zxdrag: wm.c
+all: $(UTILS_EXECS)
+
+%: %.c
 	$(CC) $< -o $@ $(CFLAGS) $(LFLAGS)
 
-install: zxdrag
+install: $(UTILS_EXECS)
 	mkdir -p $(PREFIX)/bin
 	cp $^ $(PREFIX)/bin/
 
-clean: zxdrag 
+clean: $(UTILS_EXECS)
 	rm -f $^
