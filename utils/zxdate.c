@@ -1,5 +1,5 @@
 //
-// zxdrag-bar
+// zxclock
 // by stx4
 //
 
