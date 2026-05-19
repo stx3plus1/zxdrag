@@ -10,7 +10,6 @@
 #include <sys/wait.h>
 
 #include <xcb/xcb.h>
-#include <xcb/xproto.h>
 #include <xcb/xcb_aux.h>
 
 #define INIT "/.zxrc"

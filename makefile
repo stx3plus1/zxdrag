@@ -15,5 +15,5 @@ install: $(UTILS_EXECS)
 	mkdir -p $(PREFIX)/bin
 	cp $^ $(PREFIX)/bin/
 
-clean: $(UTILS_EXECS)
-	rm -f $^
+clean:
+	rm -f $(UTILS_EXECS)
