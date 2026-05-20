@@ -25,8 +25,11 @@
 
 #define REFRESH    2.0
 
-static_assert(WIDTH  > 0, "width must be a valid X11 window size");
-static_assert(HEIGHT > 0, "height must be a valid X11 window size");
+auto width  = WIDTH,
+     height = HEIGHT;
+
+static_assert(WIDTH  > 0, "width def must be a valid X11 window size");
+static_assert(HEIGHT > 0, "height def must be a valid X11 window size");
 static_assert(PADDING >= 0, "don't clip your bar through the screen");
 static_assert(BACKGROUND < 0xFFFFFF, "background must be 24-bit color");
 static_assert(FOREGROUND < 0xFFFFFF, "foreground must be 24-bit color");
@@ -42,15 +45,15 @@ int main(void) {
 		default_screen, scr->root_visual);
 
 	// create our window
-	auto x = scr->width_in_pixels  - WIDTH  - PADDING;
-	auto y = scr->height_in_pixels - HEIGHT - PADDING;
+	auto x = scr->width_in_pixels  - width  - PADDING;
+	auto y = scr->height_in_pixels - height - PADDING;
 
 	uint16_t mask = XCB_CW_BACK_PIXEL | XCB_CW_OVERRIDE_REDIRECT |
 		XCB_CW_EVENT_MASK;
 	uint32_t values[3] = { BACKGROUND, true, XCB_EVENT_MASK_EXPOSURE };
 	xcb_window_t wnd = xcb_generate_id(conn);
 	xcb_create_window(conn, XCB_COPY_FROM_PARENT, wnd, scr->root,
-		x, y, WIDTH, HEIGHT, 0, XCB_WINDOW_CLASS_INPUT_OUTPUT, 
+		x, y, width, height, 0, XCB_WINDOW_CLASS_INPUT_OUTPUT, 
 		scr->root_visual, mask, values);
 	xcb_map_window(conn, wnd);
 	xcb_change_property(conn, XCB_PROP_MODE_REPLACE, wnd, XCB_ATOM_WM_NAME,
@@ -58,13 +61,13 @@ int main(void) {
 
 	// init cairo on window
 	cairo_surface_t* surface = cairo_xcb_surface_create(conn, wnd, 
-		visual, WIDTH, HEIGHT);
+		visual, width, height);
 
 	// push init
 	xcb_flush(conn);
 
 	// clear post-flush for ready window
-	xcb_clear_area(conn, true, wnd, 0, 0, WIDTH, HEIGHT);
+	xcb_clear_area(conn, true, wnd, 0, 0, width, height);
 
 	xcb_generic_event_t* event;
 	time_t last = time(NULL), current;
@@ -72,7 +75,7 @@ int main(void) {
 	while (1) {
 		current = time(NULL);
 		if (difftime(current, last) >= REFRESH) {
-			xcb_clear_area(conn, true, wnd, 0, 0, WIDTH, HEIGHT);
+			xcb_clear_area(conn, true, wnd, 0, 0, width, height);
 			xcb_flush(conn);
 			last = current;
 		}
@@ -84,6 +87,13 @@ int main(void) {
 		}
 
 		switch (event->response_type & ~0x80) {
+		// resize
+		case XCB_CONFIGURE_NOTIFY: {
+			xcb_configure_notify_event_t* config_event = (void*)event;
+			width = config_event->width, height = config_event->height;
+			cairo_xcb_surface_set_size(cr, width, height);
+		}
+		break;
 		// redraw entire bar window
 		case XCB_EXPOSE: {
 			xcb_clear_area(conn, false, wnd, 0, 0, 0, 0);
@@ -105,8 +115,8 @@ int main(void) {
 			cairo_text_extents(cr, date, &extents);
 
 			// 80x24 compat strikes again
-			auto x = (WIDTH  / 2) - (extents.width  / 2) -extents.x_bearing;
-			auto y = (HEIGHT / 2) - (extents.height / 2) -extents.y_bearing;
+			auto x = (width  / 2) - (extents.width  / 2) -extents.x_bearing;
+			auto y = (height / 2) - (extents.height / 2) -extents.y_bearing;
 			cairo_move_to(cr, x, y);
 			cairo_show_text(cr, date);
 
